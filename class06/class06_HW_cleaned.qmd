@@ -1,0 +1,177 @@
+---
+title: "class06_HW"
+author: "Kalle Liimatta A59002114"
+format: pdf
+date:  2022-10-17
+toc: TRUE
+editor: visual
+theme: minty
+---
+
+# Q6.
+
+**Goal: Create a function that allows the user to input any protein PDB code and outputs a plot for the specified protein as done above.**
+
+We need to create functions that performs the code below.
+
+-   s1 \<- read.pdb("4AKE") \# kinase with drug
+
+-   s2 \<- read.pdb("1AKE") \# kinase no drug
+
+-   s3 \<- read.pdb("1E4Y") \# kinase with drug
+
+-   s1.chainA \<- trim.pdb(s1, chain="A", elety="CA")
+
+-   s2.chainA \<- trim.pdb(s2, chain="A", elety="CA")
+
+-   s3.chainA \<- trim.pdb(s1, chain="A", elety="CA")
+
+-   s1.b \<- s1.chainA\$atom\$b
+
+-   s2.b \<- s2.chainA\$atom\$b
+
+-   s3.b \<- s3.chainA\$atom\$b
+
+-   plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+
+```{r}
+#install.packages("bio3d")
+library(bio3d)
+```
+
+## 1) read_function: Input the protein PDB code into the read_function to download and access the PDB file of that protein
+
+**Turn the code below into a function:**
+
+-   s1 \<- read.pdb("4AKE") \# kinase with drug
+
+-   s2 \<- read.pdb("1AKE") \# kinase no drug
+
+-   s3 \<- read.pdb("1E4Y") \# kinase with drug
+
+```{r}
+#simplify to:  x <- read.pdb("x")
+
+#input the protein PDB code where "x" is
+read_function <- function(x) {
+  sx <-read.pdb(x)
+}
+```
+
+```{r}
+#test the read_function
+s1 <- read_function("4AKE")
+s1
+#it works!
+```
+
+## 2) chain_function: add onto the read_function to build out the overall function
+
+**Turn the code below into a function:**
+
+-   s1.chainA \<- trim.pdb(s1, chain="A", elety="CA")
+
+<!-- -->
+
+-   s2.chainA \<- trim.pdb(s2, chain="A", elety="CA")
+
+-   s3.chainA \<- trim.pdb(s1, chain="A", elety="CA") #typo here, should be s3
+
+```{r}
+#simplify to --> x.chainA <-trim.pdb(x, chain="A", elety="CA")
+chain_function <- function(x) {
+  x.chainA <-trim.pdb(read_function(x), chain="A", elety="CA")
+}
+```
+
+```{r}
+#test the chain_function
+s1.chainA <-chain_function("4AKE")
+s1.chainA
+#it works!
+```
+
+## 3) atom_function: add onto the chain_function to build out the overall function
+
+**Turn the below code into a function:**
+
+-   s1.b \<- s1.chainA\$atom\$b
+
+-   s2.b \<- s2.chainA\$atom\$b
+
+-   s3.b \<- s3.chainA\$atom\$b
+
+```{r}
+#simplify to --> x.b <- x.chainA$atom$b
+atom_function <- function (x) {
+  x.chainA <-chain_function(x)
+  x.chainA$atom$b
+}
+```
+
+```{r}
+#test the function
+s1.b <- atom_function("4AKE")
+s1.b
+#it works!
+```
+
+## 4) plot_function: add onto the atom_function to make the overall function
+
+**Turn the below code into a function:**
+
+-   plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+
+```{r}
+#simplify to <-- plotb3(x.b, sse=x.chainA, typ="l", ylab="Bfactor")
+
+plotb3_function <- function(x) {
+           x.plotB3 <- plotb3(atom_function(x), 
+                     sse=chain_function(x), 
+                     typ="l", 
+                     ylab="Bfactor")}
+```
+
+```{r}
+#test the function
+plotb3_function("4AKE")
+#it works!
+```
+
+## 5) Put all the functions together to create the final function
+
+### Final function:
+
+```{r}
+#input the protein PDB code where "x" is to get a plot for the specified protein
+
+plotpdb <- function(x) {
+    sx <-read.pdb(x)
+    x.chainA <-trim.pdb(sx, chain="A", elety="CA")
+    x.b <- x.chainA$atom$b
+    x.plotB3 <- plotb3(x.b,
+                     sse=x.chainA, 
+                     typ="l",
+                     ylab="Bfactor")}
+```
+
+```{r}
+#Final test!
+plotpdb("4AKE")
+```
+
+```{r}
+plotpdb("1AKE")
+```
+
+```{r}
+plotpdb("1E4Y")
+```

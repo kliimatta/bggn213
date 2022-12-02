@@ -1,0 +1,211 @@
+---
+title: "class06_HW"
+author: "Kalle Liimatta A59002114"
+format: pdf
+date:  2022-10-17
+toc: TRUE
+editor: visual
+---
+
+# Section 1: Improving analysis code by writing functions
+
+## A)
+
+```{r}
+# (A. Can you improve this analysis code?
+
+df <- data.frame(a=1:10, b=seq(200,400,length=10),c=11:20,d=NA)
+df
+```
+
+```{r}
+df
+```
+
+Need to consolidate the below code into a function:
+
+-   df\$a \<- (df\$a - min(df\$a)) / (max(df\$a) - min(df\$a))
+
+-   df\$b \<- (df\$b - min(df\$a)) / (max(df\$b) - min(df\$b))
+
+-   df\$c \<- (df\$c - min(df\$c)) / (max(df\$c) - min(df\$c))
+
+-   df\$d \<- (df\$d - min(df\$d)) / (max(df\$a) - min(df\$d))
+
+```{r}
+# fixed the typos first
+
+#simplified the code by substituting "x"
+# x-(min(x))/max(x) - min (x)
+
+function_name <- function(x) {
+    x <- (x-min(x))/(max(x) - min (x))
+}
+
+apply(df, 2, function_name)
+```
+
+## B.)
+
+```{r}
+install.packages("bio3d")
+```
+
+```{r}
+library(bio3d)
+```
+
+Improve the below analysis code
+
+```{r}
+s1 <- read.pdb("4AKE") #kinase with drug
+s2 <- read.pdb("1AKE")  # kinase no drug
+s3 <- read.pdb("1E4Y")  # kinase with drug
+```
+
+```{r}
+s1
+```
+
+```{r}
+s2
+```
+
+```{r}
+s3
+```
+
+**Turn the code below into a function:**
+
+-   s1.chainA \<- trim.pdb(s1, chain="A", elety="CA")
+
+<!-- -->
+
+-   s2.chainA \<- trim.pdb(s2, chain="A", elety="CA")
+
+-   s3.chainA \<- trim.pdb(s1, chain="A", elety="CA") #typo here, should be s3
+
+```{r}
+#simplify to --> x.chainA <-trim.pdb(x, chain="A", elety="CA")
+chain_function <- function(x) {
+  x.chainA <-trim.pdb(x, chain="A", elety="CA")
+}
+```
+
+```{r}
+#test the chain_function
+s1.chainA <-chain_function(s1)
+s1.chainA
+```
+
+```{r}
+#test the chain_function
+s2.chainA <-chain_function(s2)
+s2.chainA
+```
+
+```{r}
+#test the chain_function
+s3.chainA <-chain_function(s3)
+s3.chainA
+```
+
+Looks like it works!
+
+**Turn the below code into a function:**
+
+-   s1.b \<- s1.chainA\$atom\$b
+
+-   s2.b \<- s2.chainA\$atom\$b
+
+-   s3.b \<- s3.chainA\$atom\$b
+
+```{r}
+#simplify to --> x.b <- x.chainA$atom$b
+#first part is from previous function, then add second part
+atom_function <- function (x) {
+  x.chainA <-chain_function(x)
+  x.chainA$atom$b
+}
+```
+
+```{r}
+#test the function
+s1.b <- atom_function(s1)
+s1.b
+```
+
+```{r}
+s2.b <- atom_function(s2)
+s2.b
+```
+
+```{r}
+s3.b <- atom_function(s3)
+s3.b
+```
+
+The function seems to work!
+
+**Turn the below code into a function:**
+
+-   plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+
+-   plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+
+```{r}
+#simplify to <-- plotb3(x.b, sse=x.chainA, typ="l", ylab="Bfactor")
+#use previous functions chain_function and atom_function
+   #x.chainA <-chain_function(x)
+   #x.b <- atom_function(x)
+
+plotb3_function <- function(x) {
+  x.plotb3 <- plotb3(atom_function(x), 
+                     sse=chain_function(x), 
+                     typ="l", 
+                     ylab="Bfactor")
+}
+```
+
+```{r}
+#test the function
+s1.plot <- plotb3_function(s1)
+```
+
+```{r}
+#test the function
+s2.plot <- plotb3_function(s2)
+```
+
+```{r}
+#test the function
+s3.plot <- plotb3_function(s3)
+```
+
+It seems to work!
+
+## Q6. HW problem
+
+Goal: Create a function that allows the user to input any protein PDB code and outputs a plot for the specified protein as done above.
+
+```{r}
+#Need to create a function for the first protein input part (code below)
+#s1 <- read.pdb("4AKE")  # kinase with drug 
+#s2 <- read.pdb("1AKE")  # kinase no drug 
+#s3 <- read.pdb("1E4Y")  # kinase with drug
+
+#simplify to:  x <- read.pdb("X")
+
+read_function <- function(x) {
+  x <-read.pdb(x)
+}
+```
+
+```{r}
+#test the function
+s1 <- read_function("4AKE")
+```
+
+It seems to work!
