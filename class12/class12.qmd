@@ -1,0 +1,297 @@
+---
+title: "class12"
+author:  "Kalle Liimatta A59002114"
+toc:  TRUE
+format: pdf
+editor: visual
+---
+
+```{r}
+#install.packages("BiocManager")
+#BiocManager::install()
+```
+
+```{r}
+#BiocManager::install("DESeq2")
+```
+
+For today's lab class, we will examine a published RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone
+
+```{r, message=FALSE}
+library(DESeq2)
+```
+
+# 2. Import countData and colData
+
+We need at least two things:
+
+-   count data (genes in rows and experiments in cols)
+
+-   metadata (aka "colData")
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <- read.csv("airway_metadata.csv")
+```
+
+```{r}
+metadata
+```
+
+```{r}
+head(counts)
+```
+
+We need to make sure that the metadata (i.e. colData) and our counts match!
+
+```{r}
+metadata$id
+```
+
+```{r}
+colnames(counts)
+```
+
+We can use the "==" test for equality. Bascially is the bit on the right the same as the bit on the left of the == signs
+
+```{r}
+"barry" == "barry"
+"barry" == "Barry"
+# not equals
+"barry" != "Barry"
+```
+
+```{r}
+colnames(counts)==metadata$id
+```
+
+We can use the "all()" function to check if all the inputs are TRUE.
+
+```{r}
+#the all function just checks if everything is true
+all(c(T,T,T,T))
+all(c(T,T,T,F))
+```
+
+```{r}
+all(colnames(counts)==metadata$id)
+# they match!
+```
+
+## Q1. How many genes are in this dataset?
+
+```{r}
+nrow(counts)
+```
+
+### 38694 genes
+
+## Q2. How many 'control' cell lines do we have?
+
+### 4
+
+# 3. Toy differential gene expression
+
+Find the mean count values per gene for control samples
+
+```{r}
+#where the info of control vs treated is
+metadata$dex
+```
+
+```{r}
+#which samples are control
+control.inds <- metadata$dex == "control"
+control.inds
+```
+
+```{r}
+#pull out the metadata for just the control samples
+metadata[control.inds,]
+```
+
+```{r}
+#pulling out the sample IDs of the control samples
+control.ids <- metadata[control.inds, "id"]
+control.ids
+```
+
+```{r}
+#pulling out the counts for just the sample IDs that are controls
+control.counts <- counts[,control.ids]
+control.counts
+```
+
+```{r}
+#get the mean value for each gene, so need to get the mean value for each row
+control.mean <-rowMeans(control.counts)
+head(control.mean)
+```
+
+## Q3. How would you make the code in either approach in the workbook more robust?
+
+### By doing each step as a separate line of code (as we did above) so that it's easy for others and future me to understand.
+
+## Q4. Follow the same procedure for the treated samples (i.e. calculate the mean per gene across drug treated samples and assign to a labeled vector called treated.mean)
+
+```{r}
+#which samples are treated
+treated.inds <- metadata$dex == "treated"
+#pull the treated samples out of the metadata
+metadata[treated.inds,]
+#pull out the sample ids of the treated samples
+treated.inds <- metadata[treated.inds, "id"]
+#pulling out the counts for just the sample IDs that are treated
+treated.counts <- counts[,treated.inds]
+#get the mean values for each gene
+treated.mean <-rowMeans(treated.counts)
+head(treated.mean)
+```
+
+Let's make a quick plot
+
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+meancounts
+```
+
+## Q5 (a). Create a scatter plot showing the mean of the treated samples against the mean of the control samples.
+
+```{r}
+plot(meancounts)
+```
+
+## Q5 (b).You could also use the ggplot2 package to make this figure producing the plot below. What geom\_?() function would you use for this plot?
+
+### geom_point()
+
+```{r}
+library("ggplot2")
+ggplot(meancounts) + aes(control.mean, treated.mean) + geom_point()
+```
+
+Most of the datapoints above are squished at the lower end, so we can't really see them. This indicates we need to transform to a log scale.
+
+## Q6. Try plotting both axes on a log scale. What is the argument to plot() that allows you to do this?
+
+### log="xy"
+
+```{r}
+plot(meancounts, log="xy")
+```
+
+Calculating log2foldchange
+
+```{r}
+meancounts$log2fc <- log2(meancounts$treated.mean/meancounts$control.mean)
+head(meancounts)
+#There are a couple of “weird” results. Namely, the NaN (“not a number”) and -Inf (negative infinity) results.
+
+#The NaN is returned when you divide by zero and try to take the log. The -Inf is returned when you try to take the log of zero. It turns out that there are a lot of genes with zero expression. Let’s filter our data to remove these genes. 
+```
+
+Let's filter the data to remove genes with 0 expression--I can't say anything about these genes and this drug treatment, so there's no need to include them.
+
+```{r}
+head(meancounts[,1:2]==0)
+```
+
+```{r}
+#finding which genes have 0 counts
+head(rowSums(meancounts[,1:2]==0))
+```
+
+```{r}
+#saving only the genes who don't have 0 values
+to.keep.inds <- rowSums(meancounts[,1:2]==0)==0
+head(to.keep.inds)
+```
+
+```{r}
+mycounts <-meancounts[to.keep.inds,]
+head(mycounts)
+```
+
+How many genes do we have left?
+
+```{r}
+nrow(mycounts)
+```
+
+## Q7. What is the purpose of the arr.ind argument in the which() function call above? Why would we then take the first column of the output and need to call the unique() function?
+
+### The arr.ind argument will tell us which genes and samples have 0 counts. We take the first column and call the unique() function so we don't count any rows twice if it has 0 in multiple samples.
+
+## Q8. Can you determine how many up regulated genes we have at the greater than 2 fc level?
+
+How many genes are "up" regulated at a threshold log2-foldchange of +2 or greater?
+
+```{r}
+sum(mycounts$log2fc >= 2)
+```
+
+### 314
+
+## Q9. Can you determine how many down regulated genes we have at the greater than 2 fc level?
+
+```{r}
+sum(mycounts$log2fc<= -2)
+```
+
+### 485
+
+## Q10. Do you trust these results? Why or why not?
+
+### No, we still need to know which values are statistically significant before we can trust the results.
+
+# 4. DESeq2 analysis
+
+Deseq2 does the work for us and gives us the p-values and adjusted p-values.
+
+```{r}
+library(DESeq2)
+```
+
+It wants counts and colData and the "design" (what to compare to what).
+
+```{r}
+dds <-DESeqDataSetFromMatrix(countData=counts,
+                             colData=metadata,
+                             design= ~dex)
+```
+
+```{r}
+dds<-DESeq(dds)
+res <-results(dds)
+head(res)
+#base mean is the mean across all samples
+#padj takes into account multiple tests --> helps keep the false discovery rate low
+```
+
+# 6. Data Visualization
+
+To keep both our inner biologist and inner stats nerd happy, we often view our data in plots of log2 fold change vs p-value
+
+```{r}
+plot(res$log2FoldChange, res$padj)
+#this isn't helpful
+```
+
+```{r}
+#take the log of padj to make a useful graph
+plot(res$log2FoldChange, log(res$padj))
+#people don't like looking at it because it's "upside down", so we'll just flip it
+```
+
+```{r}
+#to flip the graph, just add a minus sign in front of "log(res$padj)"
+plot(res$log2FoldChange, -log(res$padj),
+     xlab="Log2 Fold-Change",
+     ylab="Minus Log p-value")
+#add lines to show upregulated/downregulated genes
+abline(v=c(-2,2), col="red")
+#add line to show significant values
+#have to do "-log()" of the p-value because that's how our graph is arranged
+abline(h=-log(0.05), col="red")
+#all the values above the horizontal red line are significant
+```
