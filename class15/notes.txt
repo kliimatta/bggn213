@@ -1,0 +1,4 @@
+This is nothing more than a text editor.
+To save and exit I can push Control-X.
+
+

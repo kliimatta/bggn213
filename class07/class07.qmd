@@ -2,7 +2,7 @@
 title: "Class 7:  Machine Learning 1"
 author: "Kalle Liimatta A59002114"
 date:  2022-10-19
-format: pdf
+format: gfm
 editor: visual
 toc: True
 ---

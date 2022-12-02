@@ -2,7 +2,7 @@
 title: "class08 mini-project"
 author:  "Kalle Liimatta A59002114"
 date:  2022-10-21
-format: pdf
+format: gfm
 editor: visual
 toc: TRUE
 ---
